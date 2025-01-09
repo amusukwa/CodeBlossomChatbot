@@ -3,7 +3,9 @@ import os
 import sounddevice as sd
 import numpy as np
 import whisper
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 from dotenv import load_dotenv
 import json
 
@@ -11,7 +13,6 @@ import json
 load_dotenv()
 
 # OpenAI API Key
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Load Whisper model
 model = whisper.load_model('base') 
@@ -45,16 +46,14 @@ def chatbot(prompt):
         f"User: {prompt}\n"
         "Assistant:"
     )
-    
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=full_prompt,
-        max_tokens=150,
-        n=1,
-        stop=["User:"],
-        temperature=0.7
-    )
-    
+
+    response = client.completions.create(engine="text-davinci-003",
+    prompt=full_prompt,
+    max_tokens=150,
+    n=1,
+    stop=["User:"],
+    temperature=0.7)
+
     # Try parsing the response to JSON
     try:
         message = response.choices[0].text.strip()
