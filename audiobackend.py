@@ -2,6 +2,7 @@ import os
 import json
 import sounddevice as sd
 import numpy as np
+import testaudio_only
 from dotenv import load_dotenv
 from openai import OpenAI
 import tempfile
@@ -11,44 +12,17 @@ import time
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Set OpenAI API Key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def detect_silence(audio_chunk, threshold=0.01):
-    """Detect silence in audio chunk."""
-    return np.mean(np.abs(audio_chunk)) < threshold
+# Load Whisper model
+whisper_model = testaudio_only.load_model('base')
 
-def record_audio(samplerate=16000):
-    """Record audio until silence is detected and return the audio data."""
-    print("Listening... (Speak now)")
-    
-    chunk_duration = 0.5  # 500ms chunks
-    silence_duration = 1.5  # 1.5 seconds of silence to stop
-    chunk_samples = int(samplerate * chunk_duration)
-    silence_chunks = int(silence_duration / chunk_duration)
-    
-    audio_data = []
-    silence_counter = 0
-    speech_detected = False
-    min_audio_length = 1 * samplerate  # Minimum 1 second of audio
-
-    with sd.InputStream(samplerate=samplerate, channels=1, dtype='float32') as stream:
-        while True:
-            chunk, _ = stream.read(chunk_samples)
-            audio_data.extend(chunk)
-
-            if detect_silence(chunk):
-                silence_counter += 1
-                if silence_counter >= silence_chunks and speech_detected and len(audio_data) > min_audio_length:
-                    break
-            else:
-                silence_counter = 0
-                speech_detected = True
-
-            # Safety check to prevent infinite recording
-            if len(audio_data) > 30 * samplerate:  # Max 30 seconds
-                break
-
+def record_audio(duration=5, samplerate=16000):
+    """Record audio for a given duration and return the audio data."""
+    print("Recording...")
+    audio_data = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype='float32')
+    sd.wait()  # Wait until recording is finished
     print("Recording complete.")
     return np.array(audio_data)
 
@@ -74,21 +48,27 @@ def transcribe_audio(audio_data, samplerate=16000):
 def chatbot(prompt):
     """Generate a response from the OpenAI model based on the user's input."""
     try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", 
-                 "content": "Ndinu wothandiza wokhoza kulankhula zilankhulo zambiri ndipo mumayembekezera mafunso mu chilankhulo chilichonse ndipo mumayankha mu mawonekedwe a JSON. JSON ikuyenera kukhala ndi maina atatu: 'chingelezi', yankho mu Chingelezi, 'translation' mu chichewa, ndipo 'speaker_language' chilembedwe cha chilankhulo chomwe funsolo lanenedwa. Mukalandira mafunso mu Chichewa, Chingelezi, French kapena m'Chilankhulo china chilichonse, muyenera kuyankha mu Chichewa 'chingelezi', kutanthauzira mu 'translation', ndi kulemba dzina la chilankhulo mu 'speaker_language'."},
-                {"role": "user", "content": "Moni, muli bwanji?"},
-                {"role": "assistant", "content": '{"chingelezi": "Moni! Ndili bwino, inu muli bwanji?", "translation": "Hello! I\'m fine, how are you?", "speaker_language": "Chichewa"}'},
-                {"role": "user", "content": "What is your name"},
-                {"role": "assistant","content" : '{"chingelezi": "Dzina langa ndi Assistant.", "translation": "My name is Assistant.", "speaker_language": "English"}'},
-                {"role": "user", "content": "Salut, comment ça va?"},
-                {"role": "assistant","content" : '{"chingelezi": "Ndikuyenda bwino", "translation": "I am doing well.", "speaker_language": "French"}'},
-                {"role": "user", "content": prompt},
-            ]
+        response = openai.Completion.create(
+            engine="text-davinci-003",  # or any other engine you prefer
+            prompt=(
+                "Ndinu wothandiza wokhoza kulankhula zilankhulo zambiri ndipo mumayembekezera mafunso mu chilankhulo chilichonse ndipo mumayankha mu mawonekedwe a JSON. "
+                "JSON ikuyenera kukhala ndi maina atatu: 'chingelezi', yankho mu Chingelezi, 'translation' mu chichewa, ndipo 'speaker_language' chilembedwe cha chilankhulo chomwe funsolo lanenedwa. "
+                "Mukalandira mafunso mu Chichewa, Chingelezi, French kapena m'Chilankhulo china chilichonse, muyenera kuyankha mu Chichewa 'chingelezi', kutanthauzira mu 'translation', ndi kulemba dzina la chilankhulo mu 'speaker_language'.\n\n"
+                "User: Moni, muli bwanji?\n"
+                "Assistant: {\"chingelezi\": \"Moni! Ndili bwino, inu muli bwanji?\", \"translation\": \"Hello! I'm fine, how are you?\", \"speaker_language\": \"Chichewa\"}\n\n"
+                "User: What is your name?\n"
+                "Assistant: {\"chingelezi\": \"Dzina langa ndi Assistant.\", \"translation\": \"My name is Assistant.\", \"speaker_language\": \"English\"}\n\n"
+                "User: Salut, comment ça va?\n"
+                "Assistant: {\"chingelezi\": \"Ndikuyenda bwino\", \"translation\": \"I am doing well.\", \"speaker_language\": \"French\"}\n\n"
+                f"User: {prompt}\n"
+                "Assistant:"
+            ),
+            max_tokens=150,
+            n=1,
+            stop=["User:"],
+            temperature=0.7
         )
-        message = response.choices[0].message.content
+        message = response.choices[0].text.strip()
         
         try:
             parsed_message = json.loads(message)

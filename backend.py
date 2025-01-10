@@ -1,5 +1,5 @@
 import os
-import whisper
+import testaudio_only
 import openai
 import json
 from dotenv import load_dotenv
@@ -11,7 +11,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Load Whisper model
-model = whisper.load_model('base')
+model = testaudio_only.load_model('base')
 
 def transcribe_audio(audio_data, samplerate=16000):
     """Transcribe audio data using the Whisper model."""
