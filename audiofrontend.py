@@ -11,8 +11,7 @@ def main():
     # Audio recording method
     if input_method == 'Record Audio':
         if st.button("Start Recording"):
-            duration = 5  # Record for 5 seconds
-            audio_data = record_audio(duration)
+            audio_data = record_audio(duration=5)  # Record for 5 seconds
             transcribed_text = transcribe_audio(audio_data)
             st.write(f"Transcribed Text: {transcribed_text}")
             response = chatbot(transcribed_text)
