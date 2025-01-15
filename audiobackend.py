@@ -97,12 +97,12 @@ def chatbot(prompt):
             return parsed_message
         except json.JSONDecodeError:
             return {
-                "chingelezi": f"Pepani, sindinapeze yankho m'mawonekedwe a JSON. Ili ndi lomwe lalembedwa: {message}",
+                "chichewa": f"Pepani, sindinapeze yankho m'mawonekedwe a JSON. Ili ndi lomwe lalembedwa: {message}",
                 "translation": f"Sorry, couldn't get a response in JSON format. This was received: {message}"
             }
     except Exception as e:
         return {
-            "chingelezi": f"Panachitika vuto: {str(e)}",
+            "chichewa": f"Panachitika vuto: {str(e)}",
             "translation": f"An error occurred: {str(e)}"
         }
 
