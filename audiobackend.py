@@ -12,7 +12,9 @@ import time
 load_dotenv()
 
 # Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+#client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 def detect_silence(audio_chunk, threshold=0.01):
     """Detect silence in audio chunk."""
