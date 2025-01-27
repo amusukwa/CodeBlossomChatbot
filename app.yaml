@@ -1,0 +1,9 @@
+runtime: python39  # Specify the appropriate Python version (e.g., python38, python39)
+entrypoint: gunicorn -b :$PORT main:app  # Adjust 'main:app' to your own application structure.
+
+handlers:
+  - url: /.*
+    script: auto
+
+env_variables:
+  EXAMPLE_ENV_VAR: 'value'
