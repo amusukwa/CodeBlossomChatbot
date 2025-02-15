@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import axios from 'axios';
 
+const API_URL = 'http://127.0.0.1:8000'; // Base API URL
+
+
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -25,7 +28,7 @@ function App() {
     setInput('');
 
     try {
-      const response = await axios.post('https://your-backend-url/chat', {
+      const response = await axios.post(`${API_URL}/chat`, {
         prompt: input
       });
 
