@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import axios from 'axios';
 
-const API_URL = 'http://127.0.0.1:8000'; // Base API URL
+const API_URL = 'https://chatbot-api-205295349076.us-central1.run.app'; // Base API URL
 
 
 function App() {
@@ -31,6 +31,7 @@ function App() {
       const response = await axios.post(`${API_URL}/chat`, {
         prompt: input
       });
+      console.log('API Response:', response.data);
 
       setMessages(prev => [...prev, {
         role: 'bot',
