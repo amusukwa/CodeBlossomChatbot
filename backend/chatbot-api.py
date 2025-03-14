@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 import json
@@ -9,7 +10,19 @@ import json
 load_dotenv()
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],  # Allows all methods
+    allow_headers=["Content-Type", "Authorization"],  # Allows all headers
+)
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+print(f"API key loaded: {'Yes' if api_key else 'No'}")
+
 
 class ChatRequest(BaseModel):
     prompt: str
@@ -50,7 +63,7 @@ async def chat_endpoint(request: ChatRequest):
                 "translation": f"Sorry, couldn't get a response in JSON format. This was received: {message}",
                 "speaker_language": "error"
             }
-            
+        
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -67,4 +80,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.getenv("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=8080)
